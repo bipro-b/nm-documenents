@@ -4,8 +4,6 @@
 const pptxgen = require("pptxgenjs");
 const JSZip = require("jszip");
 const fs = require("fs");
-const path = require("path");
-const BG = fs.readFileSync(path.join(__dirname, "assets", "background.jpg")); // watercolour background, set on the slide master
 const React = require("react");
 const ReactDOMServer = require("react-dom/server");
 const sharp = require("sharp");
@@ -16,8 +14,8 @@ const QA = process.argv.includes("--qa");
 
 // ---------- Design tokens ----------
 const C = {
-  green: "1E4D3A", bar: "2E8B57", gold: "7A5C17", ink: "1F2A2E", muted: "4A5550",
-  tint: "EFF4F1", line: "D3DED7", white: "FFFFFF", onDark: "C9D8CF", stripe: "F7FAF8",
+  green: "1E4D3A", bar: "2E8B57", gold: "8A6A1F", ink: "1F2A2E", muted: "4A5550",
+  tint: "EFF4F1", footer: "DDEFE3", line: "D3DED7", white: "FFFFFF", onDark: "C9D8CF", stripe: "F7FAF8",
 };
 const HF = "Cambria", BF = "Calibri";
 const X0 = 0.6, CW = 12.13; // left margin, content width (LAYOUT_WIDE is 13.333 x 7.5)
@@ -53,16 +51,19 @@ pres.author = "Nisha Mazumder";
 pres.company = "Department of Plant Pathology, Bangladesh Agricultural University";
 pres.title = "MS Thesis Defence: Cercospora leaf spot of roselle";
 
+const BAND = { rect: { x: 0, y: 7.05, w: 13.333, h: 0.45, fill: { color: C.footer }, line: { color: C.footer } } };
 const FOOTER = [
-  { text: { text: "Nisha Mazumder  ·  MS Thesis Defence  ·  Department of Plant Pathology, BAU", options: { x: X0, y: 7.02, w: 9, h: 0.28, fontFace: BF, fontSize: 10, color: C.muted, margin: 0 } } },
+  { text: { text: "Nisha Mazumder  ·  MS Thesis Defence  ·  Department of Plant Pathology, BAU", options: { x: X0, y: 7.12, w: 9, h: 0.3, fontFace: BF, fontSize: 10.5, color: C.green, valign: "middle", margin: 0 } } },
 ];
-const SLIDE_NO = { x: 12.13, y: 7.02, w: 0.6, h: 0.28, fontFace: BF, fontSize: 10, color: C.muted, align: "right" };
+const SLIDE_NO = { x: 12.13, y: 7.12, w: 0.6, h: 0.3, fontFace: BF, fontSize: 10.5, color: C.green, align: "right", valign: "middle" };
 const masters = {};
 function master(name, pics = [], { bg = C.white, footer = true } = {}) {
   masters[name] = pics.map((p, i) => ({ ...p, name: `${name}_pic${i + 1}` }));
   pres.defineSlideMaster({
     title: name,
+    background: { color: C.white },
     objects: [
+      BAND,
       ...(footer ? FOOTER : []),
       ...masters[name].map((p) => ({ placeholder: { options: { name: p.name, type: "pic", x: p.x, y: p.y, w: p.w, h: p.h, fontFace: BF, fontSize: 11, color: C.muted, align: "center", valign: "middle" }, text: p.prompt || "Click the icon to insert a picture" } })),
     ],
@@ -109,7 +110,7 @@ function picLabels(s, rects, labels, dy = 0.06) {
   rects.forEach((r, i) => s.addText(R(labels[i]), { x: r.x, y: r.y + r.h + dy, w: r.w, h: 0.3, fontFace: BF, fontSize: 12, color: C.ink, align: "center", margin: 0, isTextBox: true }));
 }
 function panel(s, x, y, w, h) {
-  s.addShape(pres.shapes.RECTANGLE, { x, y, w, h, fill: { color: C.white, transparency: 22 }, line: { color: C.white, transparency: 100 } });
+  s.addShape(pres.shapes.RECTANGLE, { x, y, w, h, fill: { color: C.tint }, line: { color: C.tint } });
 }
 function bullets(s, list, x, y, w, h, size = 15, extra = {}) {
   s.addText(paras(list, { fontFace: BF, fontSize: size, color: C.ink }, { bullet: { indent: 16 }, paraSpaceAfter: 7 }), { x, y, w, h, valign: "top", margin: [4, 6, 4, 4], isTextBox: true, ...extra });
@@ -587,16 +588,6 @@ function tableSlide(kicker, title, tableNo, tableCap, cols, rows, se, cv, findin
       });
     if (fixed !== xml) zip.file(f, fixed);
   }
-  for (const f of Object.keys(zip.files).filter((f) => /^ppt\/(slides|slideLayouts)\/[^/]+\.xml$/.test(f))) {
-    zip.file(f, (await zip.file(f).async("string")).replace(/<p:bg>[\s\S]*?<\/p:bg>/g, ""));
-  }
-  zip.file("ppt/media/background.jpg", BG);
-  const mRels = "ppt/slideMasters/_rels/slideMaster1.xml.rels";
-  zip.file(mRels, (await zip.file(mRels).async("string")).replace("</Relationships>",
-    '<Relationship Id="rIdBackground" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/background.jpg"/></Relationships>'));
-  const mXml = "ppt/slideMasters/slideMaster1.xml";
-  zip.file(mXml, (await zip.file(mXml).async("string")).replace(/<p:bg>[\s\S]*?<\/p:bg>/, "").replace(/<p:cSld([^>]*)>/,
-    '<p:cSld$1><p:bg><p:bgPr><a:blipFill dpi="0" rotWithShape="1"><a:blip r:embed="rIdBackground"/><a:srcRect/><a:stretch><a:fillRect/></a:stretch></a:blipFill><a:effectLst/></p:bgPr></p:bg>'));
   fs.writeFileSync(OUT, await zip.generateAsync({ type: "nodebuffer", compression: "DEFLATE" }));
   console.log("wrote", OUT, QA ? "(QA preview)" : "");
 })();
