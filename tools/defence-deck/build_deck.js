@@ -15,7 +15,7 @@ const QA = process.argv.includes("--qa");
 // ---------- Design tokens ----------
 const C = {
   green: "1E4D3A", bar: "2E8B57", gold: "8A6A1F", ink: "1F2A2E", muted: "4A5550",
-  tint: "EFF4F1", footer: "DDEFE3", line: "D3DED7", white: "FFFFFF", onDark: "C9D8CF", stripe: "F7FAF8",
+  tint: "EFF4F1", footer: "8FCDA4", line: "D3DED7", white: "FFFFFF", onDark: "C9D8CF", stripe: "F7FAF8",
 };
 const HF = "Cambria", BF = "Calibri";
 const X0 = 0.6, CW = 12.13; // left margin, content width (LAYOUT_WIDE is 13.333 x 7.5)
@@ -51,11 +51,14 @@ pres.author = "Nisha Mazumder";
 pres.company = "Department of Plant Pathology, Bangladesh Agricultural University";
 pres.title = "MS Thesis Defence: Cercospora leaf spot of roselle";
 
-const BAND = { rect: { x: 0, y: 7.05, w: 13.333, h: 0.45, fill: { color: C.footer }, line: { color: C.footer } } };
+// Footer: two translucent light-green wedges crossing at the bottom (darker where they overlap)
+const WEDGE_TOP = 6.65;
+const wedge = (flipH) => ({ text: { text: "", options: { shape: pres.shapes.RIGHT_TRIANGLE, flipH, x: 0, y: WEDGE_TOP, w: 13.333, h: 7.5 - WEDGE_TOP, fill: { color: C.footer, transparency: 45 }, line: { color: C.footer, transparency: 100 } } } });
+const BAND = [wedge(false), wedge(true)];
 const FOOTER = [
-  { text: { text: "Nisha Mazumder  ·  MS Thesis Defence  ·  Department of Plant Pathology, BAU", options: { x: X0, y: 7.12, w: 9, h: 0.3, fontFace: BF, fontSize: 10.5, color: C.green, valign: "middle", margin: 0 } } },
+  { text: { text: "Nisha Mazumder  ·  MS Thesis Defence  ·  Department of Plant Pathology, BAU", options: { x: X0, y: 7.15, w: 5.6, h: 0.28, fontFace: BF, fontSize: 10, color: C.green, valign: "middle", margin: 0 } } },
 ];
-const SLIDE_NO = { x: 12.13, y: 7.12, w: 0.6, h: 0.3, fontFace: BF, fontSize: 10.5, color: C.green, align: "right", valign: "middle" };
+const SLIDE_NO = { x: 12.13, y: 7.15, w: 0.6, h: 0.28, fontFace: BF, fontSize: 10.5, bold: true, color: C.green, align: "right", valign: "middle" };
 const masters = {};
 function master(name, pics = [], { bg = C.white, footer = true } = {}) {
   masters[name] = pics.map((p, i) => ({ ...p, name: `${name}_pic${i + 1}` }));
@@ -63,7 +66,7 @@ function master(name, pics = [], { bg = C.white, footer = true } = {}) {
     title: name,
     background: { color: C.white },
     objects: [
-      BAND,
+      ...BAND,
       ...(footer ? FOOTER : []),
       ...masters[name].map((p) => ({ placeholder: { options: { name: p.name, type: "pic", x: p.x, y: p.y, w: p.w, h: p.h, fontFace: BF, fontSize: 11, color: C.muted, align: "center", valign: "middle" }, text: p.prompt || "Click the icon to insert a picture" } })),
     ],
@@ -124,7 +127,7 @@ async function iconCircle(s, icon, x, y, d = 0.62, fill = C.green) {
   const p = d * 0.25;
   s.addImage({ data: await iconPng(icon, C.white), x: x + p, y: y + p, w: d - 2 * p, h: d - 2 * p });
 }
-function keyFinding(s, text, y = 6.12) {
+function keyFinding(s, text, y = 6.02) {
   panel(s, X0, y, CW, 0.58);
   s.addText([{ text: "Key finding:  ", options: { bold: true, color: C.green } }, ...R(text, { color: C.ink })], { x: X0 + 0.2, y, w: CW - 0.4, h: 0.58, fontFace: BF, fontSize: 13.5, valign: "middle", margin: 0, isTextBox: true });
 }
@@ -159,7 +162,7 @@ function tableSlide(kicker, title, tableNo, tableCap, cols, rows, se, cv, findin
   header(s, kicker, title);
   caption(s, `Table ${tableNo}.`, tableCap, X0, 1.52, CW);
   dataTable(s, cols, rows, se, cv);
-  s.addText(FOOTNOTE, { x: X0, y: 5.68, w: CW, h: 0.3, fontFace: BF, fontSize: 10.5, italic: true, color: C.muted, margin: 0, isTextBox: true });
+  s.addText(FOOTNOTE, { x: X0, y: 5.66, w: CW, h: 0.3, fontFace: BF, fontSize: 10.5, italic: true, color: C.muted, margin: 0, isTextBox: true });
   keyFinding(s, finding);
   return s;
 }
@@ -266,10 +269,10 @@ function tableSlide(kicker, title, tableNo, tableCap, cols, rows, se, cv, findin
   ];
   for (let i = 0; i < 3; i++) {
     const x = X0 + i * 4.13;
-    panel(s, x, 1.65, 3.87, 4.95);
+    panel(s, x, 1.65, 3.87, 4.7);
     await iconCircle(s, appr[i][0], x + 0.3, 1.88, 0.62);
     s.addText([{ text: appr[i][1], options: { fontFace: HF, fontSize: 19, bold: true, color: C.green, breakLine: true } }, { text: appr[i][2], options: { fontFace: BF, fontSize: 12, color: C.gold, bold: true } }], { x: x + 1.08, y: 1.83, w: 2.7, h: 0.75, margin: 0, valign: "middle", isTextBox: true });
-    bullets(s, appr[i][3], x + 0.2, 2.8, 3.5, 3.7, 13.5, { paraSpaceAfter: 6 });
+    bullets(s, appr[i][3], x + 0.2, 2.8, 3.5, 3.45, 13.5, { paraSpaceAfter: 6 });
   }
 
   s = newSlide("ROW5");
@@ -305,11 +308,11 @@ function tableSlide(kicker, title, tableNo, tableCap, cols, rows, se, cv, findin
     bullets(s, list, x + 0.2, 2.65, 5.55, 1.75, 14.5, { paraSpaceAfter: 4 });
     s.addText(note, { x: x + 0.3, y: 4.45, w: 5.4, h: 0.8, fontFace: BF, fontSize: 13, italic: true, color: C.muted, margin: 0, valign: "top", isTextBox: true });
   });
-  s.addShape(pres.shapes.RECTANGLE, { x: X0, y: 5.6, w: CW, h: 1.05, fill: { color: C.white }, line: { color: C.green, width: 1.25 } });
+  s.addShape(pres.shapes.RECTANGLE, { x: X0, y: 5.55, w: CW, h: 0.95, fill: { color: C.white }, line: { color: C.green, width: 1.25 } });
   s.addText([
     { text: "Percent inhibition,  L = [(C − T) / C] × 100", options: { fontFace: HF, fontSize: 19, bold: true, color: C.green, breakLine: true } },
     { text: "where C = radial growth in the control and T = radial growth in the treatment (Vincent, 1947)", options: { fontFace: BF, fontSize: 13, color: C.muted } },
-  ], { x: X0 + 0.3, y: 5.6, w: CW - 0.6, h: 1.05, align: "center", valign: "middle", margin: 0, isTextBox: true });
+  ], { x: X0 + 0.3, y: 5.55, w: CW - 0.6, h: 0.95, align: "center", valign: "middle", margin: 0, isTextBox: true });
 
   s = newSlide("PAIR_R");
   header(s, "Materials and methods", "Pot and field experiments");
@@ -376,7 +379,7 @@ function tableSlide(kicker, title, tableNo, tableCap, cols, rows, se, cv, findin
     "Under humid conditions, centres turned grey from abundant conidiophores and conidia.",
     "In the advanced stage, spots coalesced; leaves became chlorotic, dried and dropped prematurely.",
   ], 7.25, 1.85, 5.3, 4.3, 16.5, { paraSpaceAfter: 14 });
-  caption(s, "Figure 3.", "Cercospora leaf spot symptoms on roselle", X0, 6.5, CW);
+  caption(s, "Figure 3.", "Cercospora leaf spot symptoms on roselle", X0, 6.38, CW);
 
   s = newSlide("GRID4");
   header(s, "Results  ·  Identification", "4.2 Isolation and morphological identification");
@@ -389,7 +392,7 @@ function tableSlide(kicker, title, tableNo, tableCap, cols, rows, se, cv, findin
   });
   s.addShape(pres.shapes.RECTANGLE, { x: 7.05, y: 5.0, w: 5.68, h: 1.27, fill: { color: C.white }, line: { color: C.green, width: 1.25 } });
   s.addText(R("Provisionally identified as Cercospora sp. (Crous and Braun, 2003). Conidial size suggests C. malayensis; multilocus sequencing is needed for species-level identification.", { color: C.ink }), { x: 7.25, y: 5.0, w: 5.3, h: 1.27, fontFace: BF, fontSize: 13.5, valign: "middle", margin: 0, isTextBox: true });
-  caption(s, "Figure 4.", "Different structures of Cercospora sp.", X0, 6.5, CW);
+  caption(s, "Figure 4.", "Different structures of Cercospora sp.", X0, 6.38, CW);
 
   s = newSlide("BIG1");
   header(s, "Results  ·  Identification", "4.3 Effect of temperature on mycelial growth");
