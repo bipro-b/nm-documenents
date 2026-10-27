@@ -1,0 +1,7 @@
+{
+  "name": "defence-deck",
+  "private": true,
+  "description": "Builds docs/Nisha_MS_Thesis_Defence.pptx",
+  "scripts": { "build": "node build_deck.js ../../docs/Nisha_MS_Thesis_Defence.pptx" },
+  "dependencies": { "jszip": "^3.10.1", "pptxgenjs": "^4.0.1", "react": "^18.3.1", "react-dom": "^18.3.1", "react-icons": "^5.3.0", "sharp": "^0.33.5" }
+}
