@@ -4,6 +4,8 @@
 const pptxgen = require("pptxgenjs");
 const JSZip = require("jszip");
 const fs = require("fs");
+const path = require("path");
+const BG = fs.readFileSync(path.join(__dirname, "assets", "background.jpg")); // watercolour background, set on the slide master
 const React = require("react");
 const ReactDOMServer = require("react-dom/server");
 const sharp = require("sharp");
@@ -14,8 +16,8 @@ const QA = process.argv.includes("--qa");
 
 // ---------- Design tokens ----------
 const C = {
-  green: "1E4D3A", bar: "2E8B57", gold: "A9852F", ink: "1F2A2E", muted: "5F6B66",
-  tint: "EFF4F1", goldOnDark: "D9BC6A", line: "D3DED7", white: "FFFFFF", onDark: "C9D8CF", stripe: "F7FAF8",
+  green: "1E4D3A", bar: "2E8B57", gold: "7A5C17", ink: "1F2A2E", muted: "4A5550",
+  tint: "EFF4F1", line: "D3DED7", white: "FFFFFF", onDark: "C9D8CF", stripe: "F7FAF8",
 };
 const HF = "Cambria", BF = "Calibri";
 const X0 = 0.6, CW = 12.13; // left margin, content width (LAYOUT_WIDE is 13.333 x 7.5)
@@ -60,7 +62,6 @@ function master(name, pics = [], { bg = C.white, footer = true } = {}) {
   masters[name] = pics.map((p, i) => ({ ...p, name: `${name}_pic${i + 1}` }));
   pres.defineSlideMaster({
     title: name,
-    background: { color: bg },
     objects: [
       ...(footer ? FOOTER : []),
       ...masters[name].map((p) => ({ placeholder: { options: { name: p.name, type: "pic", x: p.x, y: p.y, w: p.w, h: p.h, fontFace: BF, fontSize: 11, color: C.muted, align: "center", valign: "middle" }, text: p.prompt || "Click the icon to insert a picture" } })),
@@ -87,7 +88,7 @@ const PAIR = [{ x: X0, y: 1.62, w: 3.45, h: 4.1 }, { x: X0 + 3.65, y: 1.62, w: 3
 const PAIR_R = [{ x: 6.15, y: 1.62, w: 3.2, h: 4.1 }, { x: 9.53, y: 1.62, w: 3.2, h: 4.1 }];
 
 master("TITLE", [{ x: 6.12, y: 0.45, w: 1.1, h: 1.1, prompt: "BAU logo" }, { x: 0.8, y: 4.72, w: 1.25, h: 1.62, prompt: "Photo" }], { footer: false });
-master("DIVIDER", [], { bg: C.green, footer: false });
+master("DIVIDER", [], { footer: false });
 master("CONTENT");
 master("ROW5", ROW5);
 master("GRID4", GRID4);
@@ -107,8 +108,8 @@ function caption(s, label, text, x, y, w, align = "left") {
 function picLabels(s, rects, labels, dy = 0.06) {
   rects.forEach((r, i) => s.addText(R(labels[i]), { x: r.x, y: r.y + r.h + dy, w: r.w, h: 0.3, fontFace: BF, fontSize: 12, color: C.ink, align: "center", margin: 0, isTextBox: true }));
 }
-function panel(s, x, y, w, h, fill = C.tint) {
-  s.addShape(pres.shapes.RECTANGLE, { x, y, w, h, fill: { color: fill }, line: { color: fill } });
+function panel(s, x, y, w, h) {
+  s.addShape(pres.shapes.RECTANGLE, { x, y, w, h, fill: { color: C.white, transparency: 22 }, line: { color: C.white, transparency: 100 } });
 }
 function bullets(s, list, x, y, w, h, size = 15, extra = {}) {
   s.addText(paras(list, { fontFace: BF, fontSize: size, color: C.ink }, { bullet: { indent: 16 }, paraSpaceAfter: 7 }), { x, y, w, h, valign: "top", margin: [4, 6, 4, 4], isTextBox: true, ...extra });
@@ -128,10 +129,10 @@ function keyFinding(s, text, y = 6.12) {
 }
 async function divider(num, title, sub) {
   const s = newSlide("DIVIDER");
-  s.addImage({ data: await iconPng("FaLeaf", C.white), x: 8.7, y: 1.35, w: 4.2, h: 4.2, transparency: 88 });
-  s.addText(num, { x: 0.9, y: 2.0, w: 3, h: 1.0, fontFace: HF, fontSize: 66, bold: true, color: C.goldOnDark, margin: 0, isTextBox: true });
-  s.addText(title, { x: 0.9, y: 3.1, w: 8, h: 0.9, fontFace: HF, fontSize: 40, bold: true, color: C.white, margin: 0, isTextBox: true });
-  s.addText(sub, { x: 0.9, y: 4.05, w: 8, h: 0.5, fontFace: BF, fontSize: 17, color: C.onDark, margin: 0, isTextBox: true });
+  s.addImage({ data: await iconPng("FaLeaf", C.green), x: 8.7, y: 1.65, w: 4.2, h: 4.2, transparency: 88 });
+  s.addText(num, { x: 0.9, y: 2.0, w: 3, h: 1.0, fontFace: HF, fontSize: 66, bold: true, color: C.gold, margin: 0, isTextBox: true });
+  s.addText(title, { x: 0.9, y: 3.1, w: 8, h: 0.9, fontFace: HF, fontSize: 40, bold: true, color: C.green, margin: 0, isTextBox: true });
+  s.addText(sub, { x: 0.9, y: 4.05, w: 8, h: 0.5, fontFace: BF, fontSize: 17, color: C.muted, margin: 0, isTextBox: true });
 }
 
 // Results tables (thesis Tables 5-14)
@@ -568,10 +569,10 @@ function tableSlide(kicker, title, tableNo, tableCap, cols, rows, se, cv, findin
   }
 
   s = newSlide("DIVIDER");
-  s.addImage({ data: await iconPng("FaLeaf", C.white), x: 8.7, y: 1.35, w: 4.2, h: 4.2, transparency: 88 });
-  s.addText("Thank you", { x: 0.9, y: 2.3, w: 8, h: 1.1, fontFace: HF, fontSize: 54, bold: true, color: C.white, margin: 0, isTextBox: true });
-  s.addText("Questions and suggestions are welcome", { x: 0.9, y: 3.45, w: 8, h: 0.5, fontFace: BF, fontSize: 20, color: C.goldOnDark, margin: 0, isTextBox: true });
-  s.addText("This research was supported by BAURES Project No. 111/BAU/2024 and the NST Fellowship, Ministry of Science and Technology.", { x: 0.9, y: 5.9, w: 9, h: 0.6, fontFace: BF, fontSize: 13, color: C.onDark, margin: 0, valign: "top", isTextBox: true });
+  s.addImage({ data: await iconPng("FaLeaf", C.green), x: 8.7, y: 1.65, w: 4.2, h: 4.2, transparency: 88 });
+  s.addText("Thank you", { x: 0.9, y: 2.3, w: 8, h: 1.1, fontFace: HF, fontSize: 54, bold: true, color: C.green, margin: 0, isTextBox: true });
+  s.addText("Questions and suggestions are welcome", { x: 0.9, y: 3.45, w: 8, h: 0.5, fontFace: BF, fontSize: 20, color: C.gold, margin: 0, isTextBox: true });
+  s.addText("This research was supported by BAURES Project No. 111/BAU/2024 and the NST Fellowship, Ministry of Science and Technology.", { x: 0.9, y: 5.9, w: 9, h: 0.6, fontFace: BF, fontSize: 13, color: C.muted, margin: 0, valign: "top", isTextBox: true });
 
   // ---------- Write, then mark custom placeholders as picture placeholders ----------
   const buf = await pres.write({ outputType: "nodebuffer" });
@@ -586,6 +587,16 @@ function tableSlide(kicker, title, tableNo, tableCap, cols, rows, se, cv, findin
       });
     if (fixed !== xml) zip.file(f, fixed);
   }
+  for (const f of Object.keys(zip.files).filter((f) => /^ppt\/(slides|slideLayouts)\/[^/]+\.xml$/.test(f))) {
+    zip.file(f, (await zip.file(f).async("string")).replace(/<p:bg>[\s\S]*?<\/p:bg>/g, ""));
+  }
+  zip.file("ppt/media/background.jpg", BG);
+  const mRels = "ppt/slideMasters/_rels/slideMaster1.xml.rels";
+  zip.file(mRels, (await zip.file(mRels).async("string")).replace("</Relationships>",
+    '<Relationship Id="rIdBackground" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/background.jpg"/></Relationships>'));
+  const mXml = "ppt/slideMasters/slideMaster1.xml";
+  zip.file(mXml, (await zip.file(mXml).async("string")).replace(/<p:bg>[\s\S]*?<\/p:bg>/, "").replace(/<p:cSld([^>]*)>/,
+    '<p:cSld$1><p:bg><p:bgPr><a:blipFill dpi="0" rotWithShape="1"><a:blip r:embed="rIdBackground"/><a:srcRect/><a:stretch><a:fillRect/></a:stretch></a:blipFill><a:effectLst/></p:bgPr></p:bg>'));
   fs.writeFileSync(OUT, await zip.generateAsync({ type: "nodebuffer", compression: "DEFLATE" }));
   console.log("wrote", OUT, QA ? "(QA preview)" : "");
 })();
