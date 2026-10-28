@@ -171,4 +171,11 @@ for n, start, old_y, new_y, new_h, *rest in NUDGES:
     x = re.sub(r"<p:(?:sp|graphicFrame)>.*?</p:(?:sp|graphicFrame)>", fix, x, flags=re.S)
     assert hits == 1, (n, start, hits)
     sp.write_text(x)
+# document properties: the deck belongs to Nisha
+cp = D / "docProps/core.xml"
+if cp.exists():
+    t = cp.read_text()
+    for tag in ("dc:creator", "cp:lastModifiedBy"):
+        t = re.sub(rf"<{tag}>[^<]*</{tag}>", f"<{tag}>Nisha Mazumder</{tag}>", t)
+    cp.write_text(t)
 print("done; gold bar at", GOLD_Y, "in")
