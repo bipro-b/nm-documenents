@@ -1,0 +1,227 @@
+{
+ "gold_y": 1.22,
+ "bottom_y": 7.38,
+ "logo_y": 6.98,
+ "logo_slide": 2,
+ "covers": [
+  1,
+  2
+ ],
+ "to_content": [
+  6
+ ],
+ "nudges": [
+  [
+   11,
+   "Results",
+   0.72,
+   0.35,
+   null
+  ],
+  [
+   20,
+   "Table 1:",
+   1.2708,
+   1.33,
+   null
+  ],
+  [
+   21,
+   "Table 2:",
+   0.8141,
+   1.33,
+   null
+  ],
+  [
+   21,
+   "Treatments",
+   1.87,
+   2.28,
+   null
+  ],
+  [
+   21,
+   "Means followed",
+   6.2913,
+   6.7,
+   null,
+   0.66
+  ],
+  [
+   22,
+   "Table 3:",
+   0.826,
+   1.33,
+   null
+  ],
+  [
+   22,
+   "Treatments",
+   1.8145,
+   2.28,
+   null
+  ],
+  [
+   22,
+   "Means followed",
+   6.4503,
+   6.92,
+   null,
+   null
+  ],
+  [
+   23,
+   "Table 4:",
+   1.1222,
+   1.33,
+   null
+  ],
+  [
+   23,
+   "Treatments",
+   2.2092,
+   2.28,
+   null
+  ],
+  [
+   23,
+   "Means followed",
+   6.8415,
+   6.91,
+   null,
+   0.66
+  ],
+  [
+   24,
+   "Table 5:",
+   1.132,
+   1.33,
+   null
+  ],
+  [
+   24,
+   "Treatments",
+   2.2673,
+   2.28,
+   null
+  ],
+  [
+   24,
+   "Means followed",
+   6.5527,
+   6.56,
+   null,
+   null
+  ],
+  [
+   25,
+   "Table 6:",
+   1.0002,
+   1.33,
+   null
+  ],
+  [
+   25,
+   "Treatments",
+   1.9967,
+   2.28,
+   null
+  ],
+  [
+   25,
+   "Means followed",
+   6.3162,
+   6.6,
+   null,
+   0.66
+  ],
+  [
+   26,
+   "Table 7:",
+   1.0402,
+   1.33,
+   null
+  ],
+  [
+   26,
+   "Treatments",
+   2.093,
+   2.28,
+   null
+  ],
+  [
+   26,
+   "Means followed",
+   6.4934,
+   6.68,
+   null,
+   0.66
+  ],
+  [
+   27,
+   "Table 8:",
+   1.0878,
+   1.33,
+   null
+  ],
+  [
+   27,
+   "Treatments",
+   2.1744,
+   2.28,
+   null
+  ],
+  [
+   27,
+   "Means followed",
+   6.436,
+   6.55,
+   null,
+   null
+  ],
+  [
+   28,
+   "Table 9:",
+   1.2,
+   1.33,
+   null
+  ],
+  [
+   28,
+   "Treatments",
+   2.2488,
+   2.28,
+   null
+  ],
+  [
+   28,
+   "Means followed",
+   6.5,
+   6.53,
+   null,
+   null
+  ],
+  [
+   29,
+   "Table 10:",
+   0.9358,
+   1.33,
+   null
+  ],
+  [
+   29,
+   "Treatments",
+   1.8294,
+   2.28,
+   null
+  ],
+  [
+   29,
+   "Means followed",
+   6.5146,
+   6.96,
+   null,
+   0.66
+  ]
+ ]
+}

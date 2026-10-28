@@ -1,15 +1,19 @@
 """Replace the deck background with the reference academic style (white, grey title band,
 gold bar under the title, grey bar at the bottom, BAU logo bottom-left). Slide content is untouched.
 
-usage: python3 -I rebackground.py <unpacked_deck_dir> [gold_bar_y_inches]
+usage: python3 -I rebackground.py <unpacked_deck_dir> <config.json>
+config keys: gold_y (in), logo_slide, covers [slide numbers], to_content [slides moved to the CONTENT layout],
+             nudges [[slide, text the shape starts with, old_y, new_y, new_h or null], ...]
 """
+import json
 import re
 import shutil
 import sys
 from pathlib import Path
 
 D = Path(sys.argv[1])
-GOLD_Y = float(sys.argv[2]) if len(sys.argv) > 2 else 1.22
+CFG = json.loads(Path(sys.argv[2]).read_text())
+GOLD_Y = float(CFG.get("gold_y", 1.22))
 EMU = 914400
 SW, SH = 12192000, 6858000  # 13.333 x 7.5 in
 
@@ -43,12 +47,13 @@ def logo(rid):
     w = h * 250 / 214
     return (f'<p:pic><p:nvPicPr><p:cNvPr id="{nid()}" name="BAU logo"/><p:cNvPicPr><a:picLocks noChangeAspect="1"/></p:cNvPicPr><p:nvPr userDrawn="1"/></p:nvPicPr>'
             f'<p:blipFill><a:blip r:embed="{rid}"/><a:stretch><a:fillRect/></a:stretch></p:blipFill>'
-            f'<p:spPr><a:xfrm><a:off x="{e(0.12)}" y="{e(7.03)}"/><a:ext cx="{e(w)}" cy="{e(h)}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></p:spPr></p:pic>')
+            f'<p:spPr><a:xfrm><a:off x="{e(0.12)}" y="{e(CFG.get("logo_y", 7.03))}"/><a:ext cx="{e(w)}" cy="{e(h)}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></p:spPr></p:pic>')
 
 
 GOLD = lambda y: rect("Gold bar", 0, e(y), SW, e(0.07), grad("766000", "FFDE53"), '<a:ln w="3240"><a:solidFill><a:srgbClr val="E8BC00"/></a:solidFill></a:ln>')
 BOTTOM_AT = lambda y: rect("Bottom bar", 0, e(y), SW, e(0.07), grad("333333", "D0D0D0"), '<a:ln w="3240"><a:solidFill><a:srgbClr val="ABABAB"/></a:solidFill></a:ln>')
-BOTTOM = BOTTOM_AT(6.93)
+BOTTOM_Y = float(CFG.get("bottom_y", 6.93))
+BOTTOM = BOTTOM_AT(BOTTOM_Y)
 TITLE_BAND = rect("Title band", 0, 0, SW, e(GOLD_Y), grad("D0D0D0", "FFFFFF", 0))
 WHITE_BG = '<p:bg><p:bgPr><a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill><a:effectLst/></p:bgPr></p:bg>'
 LOGO_RID = "rIdBauLogo"
@@ -81,10 +86,10 @@ def set_bg(xml, bg):
 # --- logo image ---
 media = D / "ppt" / "media"
 logo_src = None
-for rel in (D / "ppt/slides/_rels").glob("slide2.xml.rels"):
+for rel in (D / "ppt/slides/_rels").glob(f"slide{CFG.get('logo_slide', 2)}.xml.rels"):
     m = re.search(r'Target="\.\./media/([^"]+)"', rel.read_text())
     logo_src = m.group(1) if m else None
-assert logo_src, "BAU logo not found on slide 2"
+assert logo_src, "BAU logo not found on the logo slide"
 shutil.copyfile(media / logo_src, media / "bau_logo.jpeg")
 
 # --- master: white background + content-slide decorations ---
@@ -99,7 +104,8 @@ for lp in sorted((D / "ppt/slideLayouts").glob("slideLayout*.xml")):
     lp.write_text(set_bg(lp.read_text(), None))
 
 # --- title-style layout (gold bar across the middle), for title / section / closing slides ---
-def make_title_style(lp, with_logo, bottom_y=6.93):
+def make_title_style(lp, with_logo, bottom_y=None):
+    bottom_y = BOTTOM_Y if bottom_y is None else bottom_y
     x = lp.read_text()
     x = set_bg(x, WHITE_BG)
     if 'showMasterSp="0"' not in x:
@@ -128,10 +134,13 @@ ids = [int(v) for v in re.findall(r'<p:sldLayoutId id="(\d+)"', mx)] + [int(v) f
 mx = mx.replace("</p:sldLayoutIdLst>", f'<p:sldLayoutId id="{max(ids) + 1}" r:id="rIdCoverLayout"/></p:sldLayoutIdLst>')
 mp.write_text(mx)
 
-# cover slides (1 and 2) use the new layout
-for n in (1, 2):
+# cover slides use the new layout; listed slides move to the CONTENT layout
+for n in CFG.get("covers", [1, 2]):
     rp = D / f"ppt/slides/_rels/slide{n}.xml.rels"
-    rp.write_text(rp.read_text().replace("../slideLayouts/slideLayout3.xml", "../slideLayouts/slideLayout8.xml"))
+    rp.write_text(re.sub(r"\.\./slideLayouts/slideLayout\d+\.xml", "../slideLayouts/slideLayout8.xml", rp.read_text()))
+for n in CFG.get("to_content", []):
+    rp = D / f"ppt/slides/_rels/slide{n}.xml.rels"
+    rp.write_text(re.sub(r"\.\./slideLayouts/slideLayout\d+\.xml", "../slideLayouts/slideLayout3.xml", rp.read_text()))
 
 # slides keep their own content; drop any slide-level background override
 for sp in (D / "ppt/slides").glob("slide*.xml"):
@@ -140,18 +149,9 @@ for sp in (D / "ppt/slides").glob("slide*.xml"):
         sp.write_text(set_bg(x, None))
 # Small nudges so titles end above the gold bar and captions start below it.
 # (slide number, text the shape starts with, old y, new y, new height or None) - inches
-NUDGES = [
-    (7, "Experimental approach", 0.59, 0.35, None),
-    (12, "Results", 0.72, 0.35, None),
-    (15, "Pathogenicity tests", 0.89, 0.35, None),
-    (17, "In vitro evaluation", 0.86, 0.35, 0.80),
-    (18, "Effect of Fungicides on Radial", 0.65, 0.45, None),
-    (19, "Antagonistic effects of bio-agents", 0.69, 0.35, None),
-    (20, "Dual culture plates", 1.13, 0.42, None),
-    (31, "Table 13:", 1.20, 1.36, None),
-    (32, "Table 14:", 1.20, 1.36, None),
-]
-for n, start, old_y, new_y, new_h in NUDGES:
+NUDGES = CFG.get("nudges", [])
+for n, start, old_y, new_y, new_h, *rest in NUDGES:
+    new_x = rest[0] if rest else None
     sp = D / f"ppt/slides/slide{n}.xml"
     x = sp.read_text()
     hits = 0
@@ -165,8 +165,10 @@ for n, start, old_y, new_y, new_h in NUDGES:
             return b
         hits += 1
         cy = e(new_h) if new_h else int(o.group(4))
-        return b.replace(o.group(0), f'<a:off x="{o.group(1)}" y="{e(new_y)}"/><a:ext cx="{o.group(3)}" cy="{cy}"')
-    x = re.sub(r"<p:sp>.*?</p:sp>", fix, x, flags=re.S)
+        x_off = e(new_x) if new_x is not None else int(o.group(1))
+        cx = int(o.group(3)) - (x_off - int(o.group(1)))  # keep the right edge when moving right
+        return b.replace(o.group(0), f'<a:off x="{x_off}" y="{e(new_y)}"/><a:ext cx="{cx}" cy="{cy}"')
+    x = re.sub(r"<p:(?:sp|graphicFrame)>.*?</p:(?:sp|graphicFrame)>", fix, x, flags=re.S)
     assert hits == 1, (n, start, hits)
     sp.write_text(x)
 print("done; gold bar at", GOLD_Y, "in")
